@@ -1,0 +1,24 @@
+{
+  "name": "swagger-explorer-mcp",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "swagger-explorer-mcp": "./bin/swagger-explorer-mcp"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./bin/swagger-explorer-mcp",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "playwright": "^1.21.0",
+    "yaml": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/node": "^16.11.7",
+    "typescript": "^4.5.4",
+    "ts-node": "^10.4.0"
+  }
+}
