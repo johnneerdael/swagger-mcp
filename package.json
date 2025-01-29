@@ -1,5 +1,5 @@
 {
-  "name": "swagger-explorer-mcp",
+  "name": "@johnneerdael/swagger-mcp",
   "version": "1.0.0",
   "main": "dist/index.js",
   "bin": {
