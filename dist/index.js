@@ -7,10 +7,39 @@ exports.SwaggerExplorerMCP = void 0;
 const express_1 = __importDefault(require("express"));
 const playwright_1 = require("playwright");
 const yaml_1 = __importDefault(require("yaml"));
+const net_1 = require("net");
+async function findAvailablePort(startPort = 3000, endPort = 65535) {
+    for (let port = startPort; port <= endPort; port++) {
+        try {
+            const server = (0, net_1.createServer)();
+            const available = await new Promise((resolve, reject) => {
+                server.once('error', (err) => {
+                    if (err.code === 'EADDRINUSE') {
+                        resolve(false);
+                    }
+                    else {
+                        reject(err);
+                    }
+                });
+                server.once('listening', () => {
+                    server.close();
+                    resolve(true);
+                });
+                server.listen(port);
+            });
+            if (available) {
+                return port;
+            }
+        }
+        catch (err) {
+            continue;
+        }
+    }
+    throw new Error('No available ports found');
+}
 class SwaggerExplorerMCP {
     constructor(config = {}) {
         this.config = {
-            port: 3000,
             ...config
         };
         this.app = (0, express_1.default)();
@@ -69,7 +98,11 @@ class SwaggerExplorerMCP {
         };
         // Health check endpoint
         this.app.get('/health', (req, res) => {
-            res.json({ status: 'healthy' });
+            res.json({
+                status: 'healthy',
+                port: this.port,
+                baseUrl: this.config.baseUrl
+            });
         });
         // Main API to explore Swagger
         this.app.post(`${basePath}/api/explore`, async (req, res) => {
@@ -171,24 +204,56 @@ class SwaggerExplorerMCP {
     async start() {
         try {
             this.browser = await playwright_1.chromium.launch();
-            this.app.listen(this.config.port, () => {
-                console.log(`Swagger Explorer MCP running on port ${this.config.port}`);
-                if (this.config.baseUrl) {
-                    console.log(`Base URL: ${this.config.baseUrl}`);
-                }
-                if (this.config.authToken) {
-                    console.log('Authentication enabled');
-                }
+            // Find an available port if none is specified
+            if (!this.port) {
+                this.port = await findAvailablePort();
+            }
+            return new Promise((resolve, reject) => {
+                const server = this.app.listen(this.port)
+                    .once('listening', () => {
+                    console.log(`Swagger Explorer MCP running on port ${this.port}`);
+                    if (this.config.baseUrl) {
+                        console.log(`Base URL: ${this.config.baseUrl}`);
+                    }
+                    if (this.config.authToken) {
+                        console.log('Authentication enabled');
+                    }
+                    resolve(this.port);
+                })
+                    .once('error', async (err) => {
+                    if (err.code === 'EADDRINUSE') {
+                        console.log(`Port ${this.port} in use, trying another port...`);
+                        this.port = undefined; // Reset port to try again
+                        try {
+                            const newPort = await this.start();
+                            resolve(newPort);
+                        }
+                        catch (retryError) {
+                            reject(retryError);
+                        }
+                    }
+                    else {
+                        console.error('Failed to start MCP:', err);
+                        reject(err);
+                    }
+                });
+                // Store server reference for proper shutdown
+                this.server = server;
             });
         }
         catch (error) {
             console.error('Failed to start MCP:', error);
-            process.exit(1);
+            throw error;
         }
     }
     async stop() {
         if (this.browser) {
             await this.browser.close();
+        }
+        if (this.server) {
+            await new Promise((resolve) => {
+                this.server.close(() => resolve());
+            });
         }
         process.exit(0);
     }
@@ -246,14 +311,3 @@ process.on('SIGINT', async () => {
         await global.mcp.stop();
     }
 });
-// Start the MCP if this is the main module
-if (require.main === module) {
-    const config = {
-        port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
-        baseUrl: process.env.BASE_URL,
-        authToken: process.env.AUTH_TOKEN
-    };
-    const mcp = new SwaggerExplorerMCP(config);
-    global.mcp = mcp;
-    mcp.start();
-}

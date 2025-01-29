@@ -1,7 +1,35 @@
 import express, { Request, Response } from 'express';
 import { chromium, Browser, Page } from 'playwright';
 import yaml from 'yaml';
-import { createServer } from 'net';
+import { createServer, Server } from 'net';
+
+async function findAvailablePort(startPort: number = 3000, endPort: number = 65535): Promise<number> {
+  for (let port = startPort; port <= endPort; port++) {
+    try {
+      const server = createServer();
+      const available = await new Promise<boolean>((resolve, reject) => {
+        server.once('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE') {
+            resolve(false);
+          } else {
+            reject(err);
+          }
+        });
+        server.once('listening', () => {
+          server.close();
+          resolve(true);
+        });
+        server.listen(port);
+      });
+      if (available) {
+        return port;
+      }
+    } catch (err) {
+      continue;
+    }
+  }
+  throw new Error('No available ports found');
+}
 
 declare global {
   var mcp: SwaggerExplorerMCP;
@@ -60,6 +88,7 @@ class SwaggerExplorerMCP {
   private config: SwaggerExplorerConfig;
   private schemaCache: Map<string, any>;
   private port?: number;
+  private server?: Server;
 
   constructor(config: SwaggerExplorerConfig = {}) {
     this.config = {
@@ -131,7 +160,11 @@ class SwaggerExplorerMCP {
 
     // Health check endpoint
     this.app.get('/health', (req, res) => {
-      res.json({ status: 'healthy' });
+      res.json({ 
+        status: 'healthy',
+        port: this.port,
+        baseUrl: this.config.baseUrl
+      });
     });
 
     // Main API to explore Swagger
@@ -285,10 +318,13 @@ class SwaggerExplorerMCP {
       await this.browser.close();
     }
     if (this.server) {
-      await new Promise((resolve) => this.server.close(resolve));
+      await new Promise<void>((resolve) => {
+        this.server!.close(() => resolve());
+      });
     }
     process.exit(0);
   }
+
   private async getSwaggerData(url: string, page: Page): Promise<any> {
     let swaggerData = null;
 
