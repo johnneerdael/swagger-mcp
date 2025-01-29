@@ -1,13 +1,13 @@
 {
   "name": "@johnneerdael/swagger-mcp",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "dist/index.js",
   "bin": {
-    "swagger-explorer-mcp": "./bin/swagger-explorer-mcp"
+    "swagger-mcp": "./bin/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node ./bin/swagger-explorer-mcp",
+    "start": "node ./bin/cli.js",
     "dev": "ts-node src/index.ts"
   },
   "dependencies": {
