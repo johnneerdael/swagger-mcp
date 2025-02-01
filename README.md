@@ -1,9 +1,19 @@
 # Swagger Explorer MCP
 
+[![smithery badge](https://smithery.ai/badge/@johnneerdael/swagger-mcp)](https://smithery.ai/server/@johnneerdael/swagger-mcp)
 A Management Control Plane (MCP) server for exploring and analyzing Swagger/OpenAPI specifications through Claude.
 
 ## Quick Start
 
+### Installing via Smithery
+
+To install Swagger Explorer for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@johnneerdael/swagger-mcp):
+
+```bash
+npx -y @smithery/cli install @johnneerdael/swagger-mcp --client claude
+```
+
+### Installing Manually
 Install and run globally using npx:
 ```bash
 npx -y @johnneerdael/swagger-mcp
