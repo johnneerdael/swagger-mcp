@@ -96,6 +96,31 @@ Environment Variables:
 - `PORT`: Server port (default: 3000)
 - `SWAGGER_URL`: Default Swagger documentation URL
 
+### Xquik OpenAPI Example
+
+Use the hosted Xquik OpenAPI document when you want Claude to inspect X data,
+monitoring, composition, and account endpoints:
+
+```bash
+SWAGGER_URL=https://docs.xquik.com/openapi.yaml \
+  npx -y @johnneerdael/swagger-mcp
+```
+
+You can also explore it through the HTTP API:
+
+```bash
+curl -X POST http://localhost:3000/api/explore \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://docs.xquik.com/openapi.yaml",
+    "options": {
+      "paths": true,
+      "schemas": true
+    },
+    "format": "minimal"
+  }'
+```
+
 ## API Endpoints
 
 ### Explore API
