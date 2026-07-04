@@ -98,15 +98,8 @@ Environment Variables:
 
 ### Xquik OpenAPI Example
 
-Use the hosted Xquik OpenAPI document when you want Claude to inspect X data,
-monitoring, composition, and account endpoints:
-
-```bash
-SWAGGER_URL=https://docs.xquik.com/openapi.yaml \
-  npx -y @johnneerdael/swagger-mcp
-```
-
-You can also explore it through the HTTP API:
+Use the hosted Xquik OpenAPI document as the `url` input when you want Claude
+to inspect X data, monitoring, composition, and account endpoints:
 
 ```bash
 curl -X POST http://localhost:3000/api/explore \
